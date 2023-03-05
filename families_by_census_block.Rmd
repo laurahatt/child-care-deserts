@@ -1,0 +1,112 @@
+---
+title: "Families with children under 6, by census block"
+author: "Laura Hatt"
+date: '2023-03-05'
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-packages, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(sf)
+library(tidycensus)
+
+path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
+```
+
+```{r, eval=FALSE, include=FALSE}
+readRenviron("~/.Renviron")`
+Sys.getenv("CENSUS_API_KEY") 
+```
+
+```{r select-decennial-variables, eval=FALSE, include=FALSE}
+census_2010_vars <- load_variables(2010, "sf1", cache = TRUE)
+
+census_2010_vars_2 <- census_2010_vars %>% 
+  filter(concept == "HOUSEHOLDS BY PRESENCE OF PEOPLE UNDER 18 YEARS BY HOUSEHOLD TYPE BY AGE OF PEOPLE UNDER 18 YEARS") %>%
+  select(c("name", "label"))
+```
+
+After exploring the decennial census data, I found a table enumerating the number of households per census block, disaggregated by the following:
+
+* whether or not a household has children
+* whether or not a household with children is a "family"
+* whether a household is led by a married male and female, a male householder, or a female householder
+* whether all the children are under 6 years old, some of the children are under 6 and others are 6-17, or all the children are 6-17.
+
+I extracted the following variables:
+
+* P020005 - with children, family, male and female householders, under 6 only
+* P020006 - with children, family, male and female householders, under 6 and 6-17
+* P020010 - with children, family, male householder, under 6 only
+* P020011 - with children, family, male householder, under 6 and 6-17
+* P020014 - with children, family, female householder, under 6
+* P020015 - with children, family, female householder, under 6 and 6-17
+* P020019 - with children, non-family, male householder, under 6 only
+* P020020 - with children, non-family, male householder, under 6 and 6-17
+* P020023 - with children, non-family, female householder, under 6 only
+* P020024 - with children, non-family, female householder, under 6 and 6-17
+
+
+```{r extract-decennial-data, eval=FALSE}
+families_by_block <- get_decennial(
+  geography = "block", 
+  state = "IL",
+  county = "COOK",
+  variables = c(fam_mf_6 = "P020005",   #children under 6 only
+                fam_mf_17 = "P020006",  #children under 6 AND children 6-17
+                fam_m_6 = "P020010", 
+                fam_m_17 = "P020011", 
+                fam_f_6 = "P020014", 
+                fam_f_17 = "P020015",
+                nfam_m_6 = "P020019",
+                nfam_m_17 = "P020020",
+                nfam_f_6 = "P020023",
+                nfam_f_17 = "P020024"), 
+  year = 2010,
+  geometry = FALSE
+)
+```
+
+```{r transform-decennial-data, eval=TRUE}
+families_by_block_tot <- families_by_block %>%
+  spread(variable, value) %>%
+  mutate(tot_fam = rowSums(cbind(fam_mf_6,
+                                 fam_mf_17,
+                                 fam_m_6,
+                                 fam_m_17,
+                                 fam_f_6,
+                                 fam_f_17,
+                                 nfam_m_6,
+                                 nfam_m_17,
+                                 nfam_f_6,
+                                 nfam_f_17)))
+```
+
+```{r get-block-geometry, eval=FALSE}
+blockShp <- get_decennial(geography = 'block', 
+                          variables = "P001001",
+                          year = 2010,
+                          state = "IL",
+                          county = "COOK",
+                          geometry = TRUE) 
+
+blockShp1 <- blockShp %>% 
+  spread(variable, value) %>%
+  select(GEOID, P001001, geometry) %>%
+  st_transform("EPSG:3435")
+```
+
+```{r add-geometry-to-decennial-data}
+families_by_block_sf <- merge(blockShp1, families_by_block_tot, 
+                              by.x = 'GEOID', by.y = 'GEOID', all.x = TRUE)
+```
+
+```{r save-data, eval=FALSE}
+write_sf(obj=families_by_block_sf, dsn="Shapefiles/families_by_block.shp")
+```
+
