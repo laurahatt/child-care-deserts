@@ -1,0 +1,80 @@
+---
+title: "Geocoding daycares"
+author: "Laura Hatt"
+date: '2023-03-05'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-packages, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(tidygeocoder)
+library(sf)
+library(tmap)
+library(tmaptools)
+library(tidycensus)
+
+path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
+```
+
+```{r load-data, message=FALSE}
+daycare <- read_csv("Daycare_Providers.csv")
+```
+
+```{r geocode-addresses-1}
+daycare$State = 'IL'
+
+daycare_lat <- daycare %>%
+  geocode_combine(queries = list(list(method = "census", mode = "batch"), 
+                                 list(method = "census", mode = "single"),
+                                 list(method = "osm")),
+                  global_params = list(street = "Street", 
+                                       city = "City",
+                                       state = "State", 
+                                       postalcode = "Zip"),
+                  query_names = c("census_batch", "census_single", "osm"))
+```
+
+```{r clean-addresses}
+#select rows with no lat/long
+daycare_lat_na <- daycare_lat[is.na(daycare_lat$lat),]
+
+#clean and concatenate address text
+daycare_lat_na$Street <- sapply(strsplit(daycare_lat_na$Street, " APT"), "[", 1)
+daycare_lat_na$Street <- sapply(strsplit(daycare_lat_na$Street, " PLZ"), "[", 1)
+daycare_lat_na$Street <- sapply(strsplit(daycare_lat_na$Street, " STE"), "[", 1)
+daycare_lat_na$Street <- sapply(strsplit(daycare_lat_na$Street, " #"), "[", 1)
+daycare_lat_na$Street <- gsub("STREEET"  , "STREET" , daycare_lat_na$Street, fixed = TRUE)
+daycare_lat_na <- daycare_lat_na %>% mutate("Address" = paste(Street, City, State, Zip))
+
+#geocode with arcgis
+daycare_lat_na_lat <- daycare_lat_na[ , !names(daycare_lat_na) %in% c("lat","long", "query")] %>%
+  geocode(addr = "Address", method = "arcgis") %>%
+  mutate("query" = "arcgis")
+
+#combine first batch and second batch
+daycare_lat_full <- rbind(daycare_lat[!is.na(daycare_lat$lat),],
+                          daycare_lat_na_lat %>% select(-Address))
+```
+
+```{r transform-to-sf}
+#what CRS does tidygeocoder use? I'm assuming 4326
+daycare_sf <- st_as_sf(daycare_lat_full,
+                        coords = c("long","lat"),
+                        crs = 4326) # EPSG code for CRS
+
+daycare_sf <- st_transform(daycare_sf, st_crs("EPSG:3435"))
+```
+
+```{r map-daycares}
+comm_areas <- st_read("comm_areas.geojson")
+tmap_mode("view") 
+tm_shape(daycare_sf) + tm_dots() + tm_basemap("OpenStreetMap")
+```
+
+```{r}
+write_sf(obj=daycare_sf, dsn=paste0(path, "Shapefiles/daycare_sf.shp"))
+```
