@@ -65,8 +65,8 @@ fam_isochrones_by10_df = do.call(rbind, fam_isochrones_by10)
 
 ```{r}
 fam_isos <- st_set_geometry(fam_isochrones_by10_df, NULL)
-fam_AdjSup <- merge(fams_as_pts_lvprop, fam_isos, by.x = 'FID', by.y = 'FID', all.x = TRUE)
-fam_AdjSup_by10 <- na.omit(fam_AdjSup)
+fam_supply <- merge(fams_as_pts_lvprop, fam_isos, by.x = 'FID', by.y = 'FID', all.x = TRUE)
+fam_supply_by10 <- na.omit(fam_supply)
 ```
 
 ```{r}
@@ -78,7 +78,7 @@ tmap_mode("plot")
 
 tm_shape(lakeview_buff_3435) + tm_borders() +
   tm_shape(lakeview) + tm_polygons(alpha=0.5) +
-  tm_shape(fam_AdjSup_samp) + tm_dots(col = "AdjSup", 
+  tm_shape(fam_supply_by10) + tm_dots(col = "AdjSup", 
                                       palette = "RdBu",  
                                       title = "Adjusted Supply", 
                                       legend.hist = FALSE) +
