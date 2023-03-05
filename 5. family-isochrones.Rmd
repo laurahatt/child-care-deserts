@@ -1,0 +1,73 @@
+---
+title: "family-isochrones"
+author: "Laura Hatt"
+date: '2023-03-05'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(sf)
+library(tmap)
+library(tidyverse)
+library(osrm, lib.loc = dev_lib)
+
+path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
+```
+
+```{r load-families-in-lakeview-proper}
+fams_as_pts_lvbuff <- read_sf("Shapefiles/families_as_points_lakeview.shp")
+
+comm_areas <- st_read("Inputs/comm_areas.geojson")
+comm_areas <- st_transform(comm_areas, "EPSG:3435")
+lakeview <- comm_areas %>% filter(community == "LAKE VIEW")
+fams_as_pts_lvprop <- st_intersection(fams_as_pts_lvbuff, lakeview) %>% select(FID)
+```
+
+```{r}
+tm_shape(fams_as_pts_lvprop) + tm_dots() +
+  tm_shape(fam_iso1) + tm_polygons() + 
+  tm_shape(daycare_lakeview) + tm_dots()
+```
+
+note that I'm not considering age range, day vs night, or language
+
+```{r add-isochrone-SPR-to-provider-point-df}
+daycare_sf <- read_sf("Shapefiles/daycare_locations.shp")
+daycare_lakeview <- st_intersection(daycare_sf, st_buffer(lakeview, 5280))
+
+prov_isos <- read_sf("Shapefiles/provider_isochrones.shp")
+prov_isos <- st_set_geometry(prov_isos, NULL)
+
+daycare_SPR <- merge(daycare_lakeview, prov_isos, by.x = 'PrvdrID', by.y = 'PrvdrID', all.x = TRUE)
+daycare_SPR <- daycare_SPR %>% select(PrvdrID, DyCpcty.x, SPR)
+```
+
+This takes about 20 seconds per family. At 3000 families, it would take 15 hours to run. 
+
+So, I'm going to run every 100th family. At 30 families, it will take 1.67 hours.
+
+```{r}
+fam_isochrones <- list()
+for (row in seq(1, nrow(fams_as_pts_lvprop), by=100)) {
+  fam_iso <- osrmIsochrone(loc = fams_as_pts_lvprop[row,], breaks = 15, osrm.profile="foot")
+  provs_in_fam_iso <- st_intersection(daycare_SPR, fam_iso)
+  fam_iso['AdjSup'] <- sum(st_set_geometry(provs_in_fam_iso, NULL)['SPR'])
+  fam_iso['FID'] <- st_set_geometry(fams_as_pts_lvprop[row,], NULL)['FID']
+  fam_isochrones[[row]] <- fam_iso
+  print(row)
+}
+
+fam_isochrones_df = do.call(rbind, fam_isochrones)
+```
+
+```{r}
+fam_isos <- st_set_geometry(fam_isochrones_df, NULL)
+fam_AdjSup <- merge(fams_as_pts_lvprop, fam_isos, by.x = 'FID', by.y = 'FID', all.x = TRUE)
+fam_AdjSup_samp <- na.omit(fam_AdjSup)
+```
+
+
