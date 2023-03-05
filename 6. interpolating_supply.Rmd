@@ -1,0 +1,58 @@
+---
+title: "6. interpolating supply"
+author: "Laura Hatt"
+date: '2023-03-05'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+CAP doesn't interpolate, they just show the dots
+the paper also does not interpolate - they calculate summary statistics
+however, I want to interpolate
+
+```{r}
+library(terra)
+library(sf)
+library(tmap)
+library(tidyverse)
+```
+
+```{r}
+fam_AdjSup_samp <- read_sf("Shapefiles/fam_AdjSup_sampshp")
+```
+
+```{r}
+comm_areas <- st_read("Inputs/comm_areas.geojson")
+comm_areas <- st_transform(comm_areas, "EPSG:3435")
+lakeview <- comm_areas %>% filter(community == "LAKE VIEW")
+```
+
+```{r}
+#creating Voronoi polygons and matching to data points, per these instructions
+#https://search.r-project.org/CRAN/refmans/sf/html/geos_unary.html
+pols <- st_collection_extract(st_voronoi(do.call(c, st_geometry(fam_AdjSup_samp))))
+pols <- st_set_crs(pols, "EPSG:3435") #this is the underlying fam_AdjSup_samp CRS
+fam_AdjSup_samp$pols <- pols[unlist(st_intersects(fam_AdjSup_samp, pols))]
+
+#remove point geometry column 
+supply_voro <- st_set_geometry(fam_AdjSup_samp, NULL) %>% select(FID, AdjSup, pols)
+supply_voro <- st_as_sf(supply_voro)
+
+#clip voronoi polygons to neighborhood boundaries
+supply_voro <- st_intersection(supply_voro, lakeview)
+supply_voro
+```
+
+
+```{r}
+tm_shape(lakeview) + tm_polygons() + 
+  tm_shape(supply_voro) + tm_polygons(col = "AdjSup") 
+```
+
+
+
+
+
