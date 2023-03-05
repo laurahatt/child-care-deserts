@@ -21,7 +21,7 @@ path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
 ```
 
 ```{r load-data, message=FALSE}
-daycare <- read_csv("Inputs/Daycare_Providers.csv")
+daycare <- read_csv(paste0(path, "Inputs/Daycare_Providers.csv"))
 ```
 
 ```{r geocode-addresses-1}
@@ -70,7 +70,7 @@ daycare_sf <- st_transform(daycare_sf, st_crs("EPSG:3435"))
 ```
 
 ```{r map-daycares}
-comm_areas <- st_read("Inputs/comm_areas.geojson")
+comm_areas <- st_read(paste0(path, "Inputs/comm_areas.geojson"))
 tmap_mode("view") 
 tm_shape(daycare_sf) + tm_dots() + tm_basemap("OpenStreetMap")
 ```

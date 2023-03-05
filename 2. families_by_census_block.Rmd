@@ -107,6 +107,6 @@ families_by_block_sf <- merge(blockShp1, families_by_block_tot,
 ```
 
 ```{r save-data}
-write_sf(obj=families_by_block_sf, dsn="Shapefiles/families_by_block.shp")
+write_sf(obj=families_by_block_sf, dsn=paste0(path, "Shapefiles/families_by_block.shp"))
 ```
 
