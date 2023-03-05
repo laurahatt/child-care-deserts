@@ -18,12 +18,12 @@ library(tidycensus)
 path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
 ```
 
-```{r, eval=FALSE, include=FALSE}
+```{r load-tidycensus-API-key}
 readRenviron("~/.Renviron")`
 Sys.getenv("CENSUS_API_KEY") 
 ```
 
-```{r select-decennial-variables, eval=FALSE, include=FALSE}
+```{r select-decennial-variables}
 census_2010_vars <- load_variables(2010, "sf1", cache = TRUE)
 
 census_2010_vars_2 <- census_2010_vars %>% 
@@ -52,7 +52,7 @@ I extracted the following variables:
 * P020024 - with children, non-family, female householder, under 6 and 6-17
 
 
-```{r extract-decennial-data, eval=FALSE}
+```{r extract-decennial-data}
 families_by_block <- get_decennial(
   geography = "block", 
   state = "IL",
@@ -72,7 +72,7 @@ families_by_block <- get_decennial(
 )
 ```
 
-```{r transform-decennial-data, eval=TRUE}
+```{r transform-decennial-data}
 families_by_block_tot <- families_by_block %>%
   spread(variable, value) %>%
   mutate(tot_fam = rowSums(cbind(fam_mf_6,
@@ -87,7 +87,7 @@ families_by_block_tot <- families_by_block %>%
                                  nfam_f_17)))
 ```
 
-```{r get-block-geometry, eval=FALSE}
+```{r get-block-geometry}
 blockShp <- get_decennial(geography = 'block', 
                           variables = "P001001",
                           year = 2010,
@@ -106,7 +106,7 @@ families_by_block_sf <- merge(blockShp1, families_by_block_tot,
                               by.x = 'GEOID', by.y = 'GEOID', all.x = TRUE)
 ```
 
-```{r save-data, eval=FALSE}
+```{r save-data}
 write_sf(obj=families_by_block_sf, dsn="Shapefiles/families_by_block.shp")
 ```
 
