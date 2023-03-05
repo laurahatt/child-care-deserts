@@ -43,7 +43,7 @@ daycare_lakeview <- st_intersection(daycare_sf_4326, lakeview_buff_4326)
 daycare_lakeview_3435 <- st_transform(daycare_lakeview, "EPSG:3435")
 ```
 
-```{r}
+```{r create-15-min-walk-isochrones-around-daycare-providers}
 isochrones <- list()
 for (row in seq(1,nrow(daycare_lakeview), by=1)) {
   iso <- osrmIsochrone(loc = daycare_lakeview[row,], breaks = 15, osrm.profile="foot")
@@ -57,18 +57,20 @@ isochrones_df = do.call(rbind, isochrones)
 isochrones_3435 <- st_transform(isochrones_df, "EPSG:3435")
 ```
 
-```{r}
+```{r load-families-as-points-shapefile}
 fams_as_pts <- read_sf("Shapefiles/families_as_points_lakeview.shp")
 ```
 
-```{r}
-tm_shape(lakeview) + tm_polygons(alpha=0.25) +
+```{r plot-families-and-provider-isochrones}
+tmap_mode("view")
+tm_shape(st_buffer(lakeview, 5280*1.5)) + tm_borders() +
+  tm_shape(lakeview) + tm_polygons(alpha=0.25) +
   tm_shape(fams_as_pts) + tm_dots(col="darkred", size=0.01) +
   tm_shape(isochrones_3435) + tm_polygons(alpha=0.25) +
-  tm_shape(daycare_lakeview_3435[3,]) + tm_dots(col="darkgreen", size=0.25) 
+  tm_shape(daycare_lakeview_3435) + tm_dots(col="darkgreen", size=0.25) 
 ```
 
-```{r}
+```{r count-families-in-each-isochrone}
 num_fams_in_iso <- list()
 for (row in seq(1,nrow(isochrones_3435), by=1)) {
   fams_in_iso <- lengths(st_intersects(fams_as_pts, isochrones_3435[row,])) > 0 
@@ -83,14 +85,14 @@ isochrones_3435['num_fams'] <- num_fams_in_iso
 Note that I assume 1.94 young children per family, per:
 https://www.statista.com/statistics/718084/average-number-of-own-children-per-family/#:~:text=The%20typical%20American%20picture%20of,18%20per%20family%20in%201960.&text=If%20there's%20one%20thing%20the,is%20known%20for%2C%20it's%20diversity.
 
-```{r}
+```{r estimate-slot-to-population-ratio-for-each-provider}
 isochrones_3435['num_child'] <- round(st_set_geometry(isochrones_3435, NULL)['num_fams']*1.94,0)
 isochrones_3435['SPR'] <- st_set_geometry(isochrones_3435, NULL)['DyCpcty'] / 
   st_set_geometry(isochrones_3435, NULL)['num_child']
 isochrones_3435
 ```
 
-```{r}
+```{r save-isochrones-as-shapefile}
 write_sf(obj=isochrones_3435, dsn="Shapefiles/provider_isochrones.shp")
 ```
 
