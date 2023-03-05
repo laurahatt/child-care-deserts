@@ -50,8 +50,11 @@ supply_voro <- supply_voro %>% select(FID, AdjSup)
 
 
 ```{r}
-tm_shape(lakeview) + tm_polygons() + 
-  tm_shape(supply_voro) + tm_polygons(col = "AdjSup", palette="RdBu") 
+map_supply_voro <- tm_shape(lakeview) + tm_polygons() + 
+  tm_shape(supply_voro) + tm_polygons(col = "AdjSup", palette="RdBu")
+
+tmap_save(map_supply_voro, "Maps/map_supply_voro.png")
+map_supply_voro
 ```
 
 
@@ -67,8 +70,16 @@ supply_voro_comb <- supply_voro %>%
 
 
 ```{r}
-tm_shape(lakeview) + tm_polygons() + 
-  tm_shape(supply_voro_comb) + tm_polygons(col="AdjSupRd", palette="RdBu") 
+map_supply_smooth <- tm_shape(lakeview) + tm_polygons() +
+  tm_shape(supply_voro_comb) + tm_polygons(col="AdjSupRd", 
+                                           palette="RdBu",
+                                           title="Slots per child under 6YO") +
+  tm_layout(main.title = "Child care supply in Lakeview, Chicago",
+            legend.outside = TRUE,
+            legend.outside.position = "right")
+
+tmap_save(map_supply_smooth, "Maps/map_supply_smooth.png")
+map_supply_smooth
 ```
 
 
