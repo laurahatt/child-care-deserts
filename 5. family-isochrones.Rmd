@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r load-packages}
 library(sf)
 library(tmap)
 library(tidyverse)
@@ -19,9 +19,9 @@ path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
 ```
 
 ```{r load-families-in-lakeview-proper}
-fams_as_pts_lvbuff <- read_sf("Shapefiles/families_as_points_lakeview.shp")
+fams_as_pts_lvbuff <- read_sf(paste0(path, "Shapefiles/families_as_points_lakeview.shp"))
 
-comm_areas <- st_read("Inputs/comm_areas.geojson")
+comm_areas <- st_read(paste0(path, "Inputs/comm_areas.geojson"))
 comm_areas <- st_transform(comm_areas, "EPSG:3435")
 lakeview <- comm_areas %>% filter(community == "LAKE VIEW")
 fams_as_pts_lvprop <- st_intersection(fams_as_pts_lvbuff, lakeview) %>% select(FID)
@@ -30,10 +30,10 @@ fams_as_pts_lvprop <- st_intersection(fams_as_pts_lvbuff, lakeview) %>% select(F
 note that I'm not considering age range, day vs night, or language
 
 ```{r add-isochrone-SPR-to-provider-point-df}
-daycare_sf <- read_sf("Shapefiles/daycare_locations.shp")
+daycare_sf <- read_sf(paste0("Shapefiles/daycare_locations.shp"))
 daycare_lakeview <- st_intersection(daycare_sf, st_buffer(lakeview, 5280))
 
-prov_isos <- read_sf("Shapefiles/provider_isochrones.shp")
+prov_isos <- read_sf(paste0(path, "Shapefiles/provider_isochrones.shp"))
 prov_isos <- st_set_geometry(prov_isos, NULL)
 
 daycare_SPR <- merge(daycare_lakeview, prov_isos, by.x = 'PrvdrID', by.y = 'PrvdrID', all.x = TRUE)
@@ -42,7 +42,7 @@ daycare_SPR <- daycare_SPR %>% select(PrvdrID, DyCpcty.x, SPR)
 
 This takes about 20 seconds per family. At 3000 families, it would take 15 hours to run. 
 
-```{r, warning = FALSE}
+```{r calculate-child-care-supply-facing-each-family, warning = FALSE}
 fam_isochrones_by10 <- list()
 for (row in seq(1, nrow(fams_as_pts_lvprop), by=10)) {
   fam_iso <- osrmIsochrone(loc = fams_as_pts_lvprop[row,], breaks = 15, osrm.profile="foot")
@@ -54,19 +54,16 @@ for (row in seq(1, nrow(fams_as_pts_lvprop), by=10)) {
 }
 
 fam_isochrones_by10_df = do.call(rbind, fam_isochrones_by10)
-```
-
-```{r}
 fam_isos <- st_set_geometry(fam_isochrones_by10_df, NULL)
 fam_supply <- merge(fams_as_pts_lvprop, fam_isos, by.x = 'FID', by.y = 'FID', all.x = TRUE)
 fam_supply_by10 <- na.omit(fam_supply)
 ```
 
-```{r}
-write_sf(obj=fam_supply_by10, dsn="Shapefiles/fam_supply_by10.shp")
+```{r save-shapefile-with-supply-for-each-family-in-point-format}
+write_sf(obj=fam_supply_by10, dsn=paste0(path, "Shapefiles/fam_supply_by10.shp"))
 ```
 
-```{r}
+```{r plot-supply-in-point-form}
 tmap_mode("plot")
 
 map_supply_point <- tm_shape(lakeview_buff_3435) + tm_borders() +
@@ -82,7 +79,7 @@ map_supply_point <- tm_shape(lakeview_buff_3435) + tm_borders() +
             legend.outside = TRUE,
             legend.outside.position = "right")
 
-tmap_save(map_supply_point, "Maps/map_supply_point")
+tmap_save(map_supply_point, paste0(path, "Maps/map_supply_point"))
 map_supply_point
 ```
 
