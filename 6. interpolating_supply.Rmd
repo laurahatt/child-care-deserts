@@ -21,7 +21,7 @@ library(tidyverse)
 ```
 
 ```{r}
-fam_AdjSup_samp <- read_sf("Shapefiles/fam_AdjSup_sampshp")
+fam_supply_by10 <- read_sf("Shapefiles/fam_supply_by10")
 ```
 
 ```{r}
@@ -33,12 +33,12 @@ lakeview <- comm_areas %>% filter(community == "LAKE VIEW")
 ```{r}
 #creating Voronoi polygons and matching to data points, per these instructions
 #https://search.r-project.org/CRAN/refmans/sf/html/geos_unary.html
-pols <- st_collection_extract(st_voronoi(do.call(c, st_geometry(fam_AdjSup_samp))))
-pols <- st_set_crs(pols, "EPSG:3435") #this is the underlying fam_AdjSup_samp CRS
-fam_AdjSup_samp$pols <- pols[unlist(st_intersects(fam_AdjSup_samp, pols))]
+pols <- st_collection_extract(st_voronoi(do.call(c, st_geometry(fam_supply_by10))))
+pols <- st_set_crs(pols, "EPSG:3435") #this is the underlying fam_supply_by10 CRS
+fam_supply_by10$pols <- pols[unlist(st_intersects(fam_supply_by10, pols))]
 
 #remove point geometry column 
-supply_voro <- st_set_geometry(fam_AdjSup_samp, NULL) %>% select(FID, AdjSup, pols)
+supply_voro <- st_set_geometry(fam_supply_by10, NULL) %>% select(FID, AdjSup, pols)
 supply_voro <- st_as_sf(supply_voro)
 
 #clip voronoi polygons to neighborhood boundaries
@@ -51,7 +51,7 @@ supply_voro <- supply_voro %>% select(FID, AdjSup)
 
 ```{r}
 tm_shape(lakeview) + tm_polygons() + 
-  tm_shape(supply_voro) + tm_polygons(col = "AdjSup") 
+  tm_shape(supply_voro) + tm_polygons(col = "AdjSup", palette="RdBu") 
 ```
 
 
@@ -68,7 +68,7 @@ supply_voro_comb <- supply_voro %>%
 
 ```{r}
 tm_shape(lakeview) + tm_polygons() + 
-  tm_shape(supply_voro_comb) + tm_polygons(col="AdjSupRd") 
+  tm_shape(supply_voro_comb) + tm_polygons(col="AdjSupRd", palette="RdBu") 
 ```
 
 
