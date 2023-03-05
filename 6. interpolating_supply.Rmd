@@ -14,7 +14,7 @@ the paper also does not interpolate - they calculate summary statistics
 however, I want to interpolate
 
 ```{r}
-library(terra)
+#library(terra)
 library(sf)
 library(tmap)
 library(tidyverse)
@@ -43,7 +43,9 @@ supply_voro <- st_as_sf(supply_voro)
 
 #clip voronoi polygons to neighborhood boundaries
 supply_voro <- st_intersection(supply_voro, lakeview)
-supply_voro
+supply_voro <- supply_voro %>% select(FID, AdjSup)
+
+#ALT METHOD: st_join(pols, fam_AdjSup_samp, st_intersects)
 ```
 
 
@@ -53,6 +55,21 @@ tm_shape(lakeview) + tm_polygons() +
 ```
 
 
+```{r}
+#https://stackoverflow.com/questions/71025852/merge-st-voronoi-polygons-by-variable
+
+supply_voro$AdjSupRd <- round(supply_voro$AdjSup, 2)
+
+supply_voro_comb <- supply_voro %>% 
+  group_by(AdjSupRd) %>%
+  summarize()
+```
+
+
+```{r}
+tm_shape(lakeview) + tm_polygons() + 
+  tm_shape(supply_voro_comb) + tm_polygons(col="AdjSupRd") 
+```
 
 
 
