@@ -48,30 +48,29 @@ daycare_SPR <- daycare_SPR %>% select(PrvdrID, DyCpcty.x, SPR)
 
 This takes about 20 seconds per family. At 3000 families, it would take 15 hours to run. 
 
-So, I'm going to run every 100th family. At 30 families, it will take about 10 mins.
 
 ```{r}
-fam_isochrones <- list()
-for (row in seq(1, nrow(fams_as_pts_lvprop), by=100)) {
+fam_isochrones_by10 <- list()
+for (row in seq(1, nrow(fams_as_pts_lvprop), by=10)) {
   fam_iso <- osrmIsochrone(loc = fams_as_pts_lvprop[row,], breaks = 15, osrm.profile="foot")
   provs_in_fam_iso <- st_intersection(daycare_SPR, fam_iso)
   fam_iso['AdjSup'] <- sum(st_set_geometry(provs_in_fam_iso, NULL)['SPR'])
   fam_iso['FID'] <- st_set_geometry(fams_as_pts_lvprop[row,], NULL)['FID']
-  fam_isochrones[[row]] <- fam_iso
+  fam_isochrones_by10[[row]] <- fam_iso
   print(row)
 }
 
-fam_isochrones_df = do.call(rbind, fam_isochrones)
+fam_isochrones_by10_df = do.call(rbind, fam_isochrones_by10)
 ```
 
 ```{r}
-fam_isos <- st_set_geometry(fam_isochrones_df, NULL)
+fam_isos <- st_set_geometry(fam_isochrones_by10_df, NULL)
 fam_AdjSup <- merge(fams_as_pts_lvprop, fam_isos, by.x = 'FID', by.y = 'FID', all.x = TRUE)
-fam_AdjSup_samp <- na.omit(fam_AdjSup)
+fam_AdjSup_by10 <- na.omit(fam_AdjSup)
 ```
 
 ```{r}
-write_sf(obj=fam_AdjSup_samp, dsn="Shapefiles/fam_AdjSup_samp.shp")
+write_sf(obj=fam_supply_by10, dsn="Shapefiles/fam_supply_by10.shp")
 ```
 
 ```{r}
