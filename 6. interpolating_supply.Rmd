@@ -18,14 +18,16 @@ however, I want to interpolate
 library(sf)
 library(tmap)
 library(tidyverse)
+
+path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
 ```
 
 ```{r}
-fam_supply_by10 <- read_sf("Shapefiles/fam_supply_by10")
+fam_supply_by10 <- read_sf(paste0(path, "Shapefiles/fam_supply_by10.shp"))
 ```
 
 ```{r}
-comm_areas <- st_read("Inputs/comm_areas.geojson")
+comm_areas <- st_read(paste0(path, "Inputs/comm_areas.geojson"))
 comm_areas <- st_transform(comm_areas, "EPSG:3435")
 lakeview <- comm_areas %>% filter(community == "LAKE VIEW")
 ```
@@ -53,7 +55,7 @@ supply_voro <- supply_voro %>% select(FID, AdjSup)
 map_supply_voro <- tm_shape(lakeview) + tm_polygons() + 
   tm_shape(supply_voro) + tm_polygons(col = "AdjSup", palette="RdBu")
 
-tmap_save(map_supply_voro, "Maps/map_supply_voro.png")
+tmap_save(map_supply_voro, paste0(path, "Maps/map_supply_voro.png"))
 map_supply_voro
 ```
 
@@ -78,7 +80,7 @@ map_supply_smooth <- tm_shape(lakeview) + tm_polygons() +
             legend.outside = TRUE,
             legend.outside.position = "right")
 
-tmap_save(map_supply_smooth, "Maps/map_supply_smooth.png")
+tmap_save(map_supply_smooth, paste0(path, "Maps/map_supply_smooth.png"))
 map_supply_smooth
 ```
 
