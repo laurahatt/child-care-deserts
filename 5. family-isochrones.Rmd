@@ -48,7 +48,7 @@ daycare_SPR <- daycare_SPR %>% select(PrvdrID, DyCpcty.x, SPR)
 
 This takes about 20 seconds per family. At 3000 families, it would take 15 hours to run. 
 
-So, I'm going to run every 100th family. At 30 families, it will take 1.67 hours.
+So, I'm going to run every 100th family. At 30 families, it will take about 10 mins.
 
 ```{r}
 fam_isochrones <- list()
@@ -70,4 +70,21 @@ fam_AdjSup <- merge(fams_as_pts_lvprop, fam_isos, by.x = 'FID', by.y = 'FID', al
 fam_AdjSup_samp <- na.omit(fam_AdjSup)
 ```
 
+```{r}
+tmap_mode("plot")
+
+tm_shape(lakeview_buff_3435) + tm_borders() +
+  tm_shape(lakeview) + tm_polygons(alpha=0.5) +
+  tm_shape(fam_AdjSup_samp) + tm_dots(col = "AdjSup", 
+                                      palette = "RdBu",  
+                                      title = "Adjusted Supply", 
+                                      legend.hist = FALSE) +
+  tm_shape(daycare_SPR) + tm_dots(col="darkgreen", 
+                                  size="DyCpcty.x",
+                                  title = "Daycare Capacity") +
+  tm_layout(main.title = "Child care access, Lakeview",
+            legend.outside = TRUE,
+            legend.outside.position = "right")
+
+```
 
