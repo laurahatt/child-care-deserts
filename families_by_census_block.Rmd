@@ -19,7 +19,7 @@ path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
 ```
 
 ```{r load-tidycensus-API-key}
-readRenviron("~/.Renviron")`
+#readRenviron("~/.Renviron")`
 Sys.getenv("CENSUS_API_KEY") 
 ```
 
