@@ -18,24 +18,27 @@ library(osrm, lib.loc = dev_lib)
 path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
 ```
 
-```{r load-families-in-lakeview-proper}
+```{r}
 fams_as_pts_lvbuff <- read_sf(paste0(path, "Shapefiles/families_as_points_lakeview.shp"))
 
-comm_areas <- st_read(paste0(path, "Inputs/comm_areas.geojson"))
-comm_areas <- st_transform(comm_areas, "EPSG:3435")
+comm_areas <- st_read(paste0(path, "Inputs/comm_areas.geojson")) %>% st_transform("EPSG:3435")
+
+daycare_sf <- read_sf(paste0("Shapefiles/daycare_locations.shp"))
+
+prov_isos <- read_sf(paste0(path, "Shapefiles/provider_isochrones.shp")) %>% st_set_geometry(NULL)
+```
+
+
+```{r}
 lakeview <- comm_areas %>% filter(community == "LAKE VIEW")
+daycare_lakeview <- st_intersection(daycare_sf, st_buffer(lakeview, 5280))
 fams_as_pts_lvprop <- st_intersection(fams_as_pts_lvbuff, lakeview) %>% select(FID)
 ```
+
 
 note that I'm not considering age range, day vs night, or language
 
 ```{r add-isochrone-SPR-to-provider-point-df}
-daycare_sf <- read_sf(paste0("Shapefiles/daycare_locations.shp"))
-daycare_lakeview <- st_intersection(daycare_sf, st_buffer(lakeview, 5280))
-
-prov_isos <- read_sf(paste0(path, "Shapefiles/provider_isochrones.shp"))
-prov_isos <- st_set_geometry(prov_isos, NULL)
-
 daycare_SPR <- merge(daycare_lakeview, prov_isos, by.x = 'PrvdrID', by.y = 'PrvdrID', all.x = TRUE)
 daycare_SPR <- daycare_SPR %>% select(PrvdrID, DyCpcty.x, SPR)
 ```
@@ -60,7 +63,7 @@ fam_supply_by10 <- na.omit(fam_supply)
 ```
 
 ```{r save-shapefile-with-supply-for-each-family-in-point-format}
-write_sf(obj=fam_supply_by10, dsn=paste0(path, "Shapefiles/fam_supply_by10.shp"))
+#write_sf(obj=fam_supply_by10, dsn=paste0(path, "Shapefiles/fam_supply_by10.shp"))
 ```
 
 ```{r plot-supply-in-point-form}
