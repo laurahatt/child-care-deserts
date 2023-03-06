@@ -77,7 +77,9 @@ map_slots_per_child_voronoi <- tm_shape(lakeview, bbox=bbox_new) + tm_polygons()
   tm_shape(supply_voro_comb) + tm_polygons(col="AdjSupRd", 
                                            palette="RdBu",
                                            title=" ") +
-  tm_layout(main.title = "Child Care Supply in Lakeview: \nSlots Per Child (Voronoi tessellation)",
+  tm_layout(main.title = "Child Care Supply in Lakeview: \nSlots Per Child (Voronoi Tessellation)",
+            main.title.size = 1.25,
+            main.title.position = "center",
             legend.position = c("right", "center")) +
   tm_compass(type = "4star", size = 2, position = c("right", "top")) + 
   tm_scale_bar(position = c("left", "bottom"), text.size = 0.5, breaks = c(0, 0.5, 1)) +
@@ -105,24 +107,30 @@ quantile(st_set_geometry(supply_voro, NULL)$AdjSup, probs = seq(0, 1, by= 0.1))
 
 
 ```{r}
-
+#transforming supply into binary measure: zero or nonzero
 supply_voro$nonzero <-factor(ifelse(supply_voro$AdjSup==0,"Zero","More than zero"),
                              levels = c("Zero", "More than zero"))
 
+#combining Voronoi polygons with the same value
 supply_voro_nonzero <- supply_voro %>% 
   group_by(nonzero) %>%
   summarize()
 
-tm_shape(lakeview, bbox=bbox_new) + tm_polygons() +
+map_zero_slots_voronoi <- tm_shape(lakeview, bbox=bbox_new) + tm_polygons() +
   tm_shape(supply_voro_nonzero) + tm_polygons(col="nonzero", 
                                            palette="RdBu",
                                            title=" ") +
-  tm_layout(main.title = "Child care supply in Lakeview: \nplaces with zero slots per child",
+  tm_layout(main.title = "Child Care Supply in Lakeview: \nRegions with Zero Slots (Voronoi Tessellation)",
+            main.title.size = 1.25,
+            main.title.position = "center", 
             legend.position = c("right", "center")) + 
   tm_compass(type = "4star", size = 2, position = c("right", "top")) + 
   tm_scale_bar(position = c("left", "bottom"), text.size = 0.5, breaks = c(0, 0.5, 1)) +
   tm_credits("Created by Laura Hatt", fontface = "bold", position = c("right", "bottom"), size = 0.5) +
   tm_credits("6 March 2023", position = c("right", "bottom"), size = 0.5)
+tmap_save(map_zero_slots_voronoi, paste0(path, "Maps/map_zero_slots_voronoi.png"))
+
+map_zero_slots_voronoi
 ```
 
 
