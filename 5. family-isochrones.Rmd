@@ -83,7 +83,8 @@ bbox_new <- bbox_new %>% st_as_sfc()
 #when I'm showing variation by dot size instead of dot color
 daycare_SPR <- rename(daycare_SPR, Slots = DyCpcty_x)
 
-map_supply_point <- tm_shape(st_buffer(lakeview, 5280), bbox=bbox_new) + tm_borders(col="white") +
+map_slots_per_child_point <- tm_shape(st_buffer(lakeview, 5280), bbox=bbox_new) +
+  tm_borders(col="white") +
   tm_shape(lakeview) + tm_polygons(alpha=0.5) +
   tm_shape(daycare_SPR) + tm_dots(size="Slots")  +
   tm_shape(fam_supply_by10) + tm_dots(col = "AdjSup",
@@ -100,8 +101,8 @@ map_supply_point <- tm_shape(st_buffer(lakeview, 5280), bbox=bbox_new) + tm_bord
              position = c("right", "bottom"), size = 0.5) +
   tm_credits("6 March 2023", position = c("right", "bottom"), size = 0.5) 
 
-tmap_save(map_supply_point, paste0(path, "Maps/map_supply_point"))
-map_supply_point
+tmap_save(map_slots_per_child_point, paste0(path, "Maps/map_slots_per_child_point"))
+map_slots_per_child_point
 ```
 
 ```{r}
