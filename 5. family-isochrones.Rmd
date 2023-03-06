@@ -13,7 +13,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(sf)
 library(tmap)
 library(tidyverse)
-library(osrm, lib.loc = dev_lib)
+
+dev_lib_path <-"/Users/laurahatt/Documents/R/dev-versions/"
+library(osrm, lib.loc = dev_lib_path)
 
 path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
 ```
@@ -27,7 +29,7 @@ daycare_SPR <- read_sf(paste0(path, "Shapefiles/daycare_SPR.shp"))
 ```
 
 
-```{r}
+```{r, warning = FALSE}
 lakeview <- comm_areas %>% filter(community == "LAKE VIEW")
 fams_as_pts_lvprop <- st_intersection(fams_as_pts_lvbuff, lakeview) %>% select(FID)
 ```
@@ -57,19 +59,21 @@ fam_supply_by10 <- na.omit(fam_supply)
 
 ```{r save-shapefile-with-supply-for-each-family-in-point-format}
 #write_sf(obj=fam_supply_by10, dsn=paste0(path, "Shapefiles/fam_supply_by10.shp"))
+#fam_supply_by10 <- read_sf(paste0(path, "Shapefiles/fam_supply_by10.shp"))
 ```
 
 ```{r plot-supply-in-point-form}
 tmap_mode("plot")
 
-map_supply_point <- tm_shape(lakeview_buff_3435) + tm_borders() +
+
+map_supply_point <- tm_shape(st_buffer(lakeview, 5280)) + tm_borders() +
   tm_shape(lakeview) + tm_polygons(alpha=0.5) +
   tm_shape(fam_supply_by10) + tm_dots(col = "AdjSup", 
                                       palette = "RdBu",  
                                       title = "Adjusted Supply", 
                                       legend.hist = FALSE) +
   tm_shape(daycare_SPR) + tm_dots(col="darkgreen", 
-                                  size="DyCpcty.x",
+                                  size="DyCpcty_x",
                                   title = "Daycare Capacity") +
   tm_layout(main.title = "Child care access, Lakeview",
             legend.outside = TRUE,
