@@ -20,8 +20,8 @@ library(geodist)
 
 #load developer version of osrm - there's a bug in the CRAN version
 dev_lib_path <-"/Users/laurahatt/Documents/R/dev-versions/"
-remotes::install_github('riatelab/osrm', lib=dev_lib_path) 
-library(osrm, lib.loc = dev_lib)
+remotes::install_github('riatelab/osrm', force = FALSE, lib=dev_lib_path) 
+library(osrm, lib.loc = dev_lib_path)
 
 path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
 ```
@@ -93,6 +93,13 @@ isochrones_3435
 ```
 
 ```{r save-isochrones-as-shapefile}
-write_sf(obj=isochrones_3435, dsn=paste0(path, "Shapefiles/provider_isochrones.shp"))
+#write_sf(obj=isochrones_3435, dsn=paste0(path, "Shapefiles/provider_isochrones.shp"))
+```
+
+```{r}
+isochrones_3435 <- st_set_geometry(isochrones_3435, NULL)
+daycare_SPR <- merge(daycare_lakeview_3435, isochrones_3435, by.x = 'PrvdrID', by.y = 'PrvdrID', all.x = TRUE)
+daycare_SPR <- daycare_SPR %>% select(PrvdrID, DyCpcty.x, SPR)
+write_sf(obj=daycare_SPR, dsn=paste0(path, "Shapefiles/daycare_SPR.shp"))
 ```
 

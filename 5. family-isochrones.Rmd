@@ -23,25 +23,18 @@ fams_as_pts_lvbuff <- read_sf(paste0(path, "Shapefiles/families_as_points_lakevi
 
 comm_areas <- st_read(paste0(path, "Inputs/comm_areas.geojson")) %>% st_transform("EPSG:3435")
 
-daycare_sf <- read_sf(paste0("Shapefiles/daycare_locations.shp"))
-
-prov_isos <- read_sf(paste0(path, "Shapefiles/provider_isochrones.shp")) %>% st_set_geometry(NULL)
+daycare_SPR <- read_sf(paste0(path, "Shapefiles/daycare_SPR.shp"))
 ```
 
 
 ```{r}
 lakeview <- comm_areas %>% filter(community == "LAKE VIEW")
-daycare_lakeview <- st_intersection(daycare_sf, st_buffer(lakeview, 5280))
 fams_as_pts_lvprop <- st_intersection(fams_as_pts_lvbuff, lakeview) %>% select(FID)
 ```
 
 
 note that I'm not considering age range, day vs night, or language
 
-```{r add-isochrone-SPR-to-provider-point-df}
-daycare_SPR <- merge(daycare_lakeview, prov_isos, by.x = 'PrvdrID', by.y = 'PrvdrID', all.x = TRUE)
-daycare_SPR <- daycare_SPR %>% select(PrvdrID, DyCpcty.x, SPR)
-```
 
 This takes about 20 seconds per family. At 3000 families, it would take 15 hours to run. 
 
