@@ -51,17 +51,6 @@ supply_voro <- supply_voro %>% select(FID, AdjSup)
 
 
 ```{r}
-tmap_mode("plot")
-
-map_supply_voro <- tm_shape(lakeview) + tm_polygons() + 
-  tm_shape(supply_voro) + tm_polygons(col = "AdjSup", palette="RdBu")
-
-tmap_save(map_supply_voro, paste0(path, "Maps/map_supply_voro.png"))
-map_supply_voro
-```
-
-
-```{r}
 #https://stackoverflow.com/questions/71025852/merge-st-voronoi-polygons-by-variable
 
 supply_voro$AdjSupRd <- round(supply_voro$AdjSup, 2)
@@ -73,28 +62,30 @@ supply_voro_comb <- supply_voro %>%
 
 
 ```{r}
-bbox_new <- st_bbox(lakeview) # current bounding box
-xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
-yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
-# bbox_new[1] <- bbox_new[1] - (0.1 * xrange) # xmin - left
- bbox_new[3] <- bbox_new[3] + (0.4 * xrange) # xmax - right
- bbox_new[2] <- bbox_new[2] - (0.2 * yrange) # ymin - bottom
- #bbox_new[4] <- bbox_new[4] + (0.3 * yrange) # ymax - top
+tmap_mode("plot")
+
+#expand bounding box to make room for map elements
+#https://www.jla-data.net/eng/adjusting-bounding-box-of-a-tmap-map/
+bbox_new <- st_bbox(lakeview) 
+xrange <- bbox_new$xmax - bbox_new$xmin 
+yrange <- bbox_new$ymax - bbox_new$ymin 
+bbox_new[3] <- bbox_new[3] + (0.4 * xrange) 
+bbox_new[2] <- bbox_new[2] - (0.2 * yrange) 
 bbox_new <- bbox_new %>% st_as_sfc() 
 
-map_supply_smooth <- tm_shape(lakeview, bbox=bbox_new) + tm_polygons() +
+map_slots_per_child_voronoi <- tm_shape(lakeview, bbox=bbox_new) + tm_polygons() +
   tm_shape(supply_voro_comb) + tm_polygons(col="AdjSupRd", 
                                            palette="RdBu",
                                            title=" ") +
-  tm_layout(main.title = "Child care supply in Lakeview: \nslots per child",
+  tm_layout(main.title = "Child Care Supply in Lakeview: \nSlots Per Child (Voronoi tessellation)",
             legend.position = c("right", "center")) +
   tm_compass(type = "4star", size = 2, position = c("right", "top")) + 
   tm_scale_bar(position = c("left", "bottom"), text.size = 0.5, breaks = c(0, 0.5, 1)) +
   tm_credits("Created by Laura Hatt", fontface = "bold", position = c("right", "bottom"), size = 0.5) +
   tm_credits("6 March 2023", position = c("right", "bottom"), size = 0.5)
+tmap_save(map_slots_per_child_voronoi, paste0(path, "Maps/map_slots_per_child_voronoi.png"))
 
-tmap_save(map_supply_smooth, paste0(path, "Maps/map_supply_smooth.png"))
-map_supply_smooth
+map_slots_per_child_voronoi
 ```
 
 In order to define a "child care desert", one must define some kind of threshold. There is no consensus about this threshold, especially in terms of walking time.
@@ -110,29 +101,17 @@ ecdf(st_set_geometry(supply_voro, NULL)$AdjSup)(0)
 
 #the percentiles are as follows
 quantile(st_set_geometry(supply_voro, NULL)$AdjSup, probs = seq(0, 1, by= 0.1)) 
-
-#now transform and map
-#supply_voro$nonzero <- as.numeric(st_set_geometry(supply_voro, NULL)$AdjSup > 0)
-supply_voro$nonzero <-factor(ifelse(supply_voro$AdjSup==0,"Zero","More than zero"))
-supply_voro <- mutate(supply_voro, nonzero = factor(nonzero, levels = c("Zero", "More than zero")))
 ```
 
 
 ```{r}
+
+supply_voro$nonzero <-factor(ifelse(supply_voro$AdjSup==0,"Zero","More than zero"),
+                             levels = c("Zero", "More than zero"))
+
 supply_voro_nonzero <- supply_voro %>% 
   group_by(nonzero) %>%
   summarize()
-
-#https://www.jla-data.net/eng/adjusting-bounding-box-of-a-tmap-map/
-bbox_new <- st_bbox(lakeview) # current bounding box
-xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
-yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
-# bbox_new[1] <- bbox_new[1] - (0.1 * xrange) # xmin - left
- bbox_new[3] <- bbox_new[3] + (0.4 * xrange) # xmax - right
- bbox_new[2] <- bbox_new[2] - (0.2 * yrange) # ymin - bottom
- #bbox_new[4] <- bbox_new[4] + (0.3 * yrange) # ymax - top
-bbox_new <- bbox_new %>% st_as_sfc() 
-
 
 tm_shape(lakeview, bbox=bbox_new) + tm_polygons() +
   tm_shape(supply_voro_nonzero) + tm_polygons(col="nonzero", 
