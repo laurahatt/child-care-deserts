@@ -81,8 +81,37 @@ map_supply_smooth <- tm_shape(lakeview) + tm_polygons() +
             legend.outside.position = "right")
 
 tmap_save(map_supply_smooth, paste0(path, "Maps/map_supply_smooth.png"))
+tmap_mode("view")
 map_supply_smooth
 ```
+
+In order to define a "child care desert", one must define some kind of threshold. There is no consensus about this threshold, especially in terms of walking time.
+
+```{r}
+
+#The mean is 0.0271 slots per children.
+mean(st_set_geometry(supply_voro['AdjSup'], NULL)$AdjSup)
+
+#46.85% of families in Lakeview do not have any licensed childcare providers 
+#within a 15-minute walk of their house
+ecdf(st_set_geometry(supply_voro, NULL)$AdjSup)(0)
+
+#the percentiles are as follows
+quantile(st_set_geometry(supply_voro, NULL)$AdjSup, probs = seq(0, 1, by= 0.1)) 
+
+#now transform and map
+supply_voro$nonzero <- as.numeric(st_set_geometry(supply_voro, NULL)$AdjSup > 0)
+supply_voro
+```
+
+```{r}
+tmap_mode("plot")
+
+tm_shape(lakeview) + tm_polygons() + 
+  tm_shape(supply_voro) + tm_polygons(col = "nonzero", 
+                                      palette="RdBu")
+```
+
 
 
 
