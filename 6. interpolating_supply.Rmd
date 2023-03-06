@@ -13,8 +13,7 @@ CAP doesn't interpolate, they just show the dots
 the paper also does not interpolate - they calculate summary statistics
 however, I want to interpolate
 
-```{r}
-#library(terra)
+```{r, warning = FALSE}
 library(sf)
 library(tmap)
 library(tidyverse)
@@ -26,13 +25,13 @@ path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
 fam_supply_by10 <- read_sf(paste0(path, "Shapefiles/fam_supply_by10.shp"))
 ```
 
-```{r}
+```{r, message = FALSE}
 comm_areas <- st_read(paste0(path, "Inputs/comm_areas.geojson"))
 comm_areas <- st_transform(comm_areas, "EPSG:3435")
 lakeview <- comm_areas %>% filter(community == "LAKE VIEW")
 ```
 
-```{r}
+```{r, warning = FALSE}
 #creating Voronoi polygons and matching to data points, per these instructions
 #https://search.r-project.org/CRAN/refmans/sf/html/geos_unary.html
 pols <- st_collection_extract(st_voronoi(do.call(c, st_geometry(fam_supply_by10))))
@@ -52,6 +51,8 @@ supply_voro <- supply_voro %>% select(FID, AdjSup)
 
 
 ```{r}
+tmap_mode("plot")
+
 map_supply_voro <- tm_shape(lakeview) + tm_polygons() + 
   tm_shape(supply_voro) + tm_polygons(col = "AdjSup", palette="RdBu")
 
@@ -72,16 +73,27 @@ supply_voro_comb <- supply_voro %>%
 
 
 ```{r}
-map_supply_smooth <- tm_shape(lakeview) + tm_polygons() +
+bbox_new <- st_bbox(lakeview) # current bounding box
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+# bbox_new[1] <- bbox_new[1] - (0.1 * xrange) # xmin - left
+ bbox_new[3] <- bbox_new[3] + (0.4 * xrange) # xmax - right
+ bbox_new[2] <- bbox_new[2] - (0.2 * yrange) # ymin - bottom
+ #bbox_new[4] <- bbox_new[4] + (0.3 * yrange) # ymax - top
+bbox_new <- bbox_new %>% st_as_sfc() 
+
+map_supply_smooth <- tm_shape(lakeview, bbox=bbox_new) + tm_polygons() +
   tm_shape(supply_voro_comb) + tm_polygons(col="AdjSupRd", 
                                            palette="RdBu",
-                                           title="Slots per child under 6YO") +
-  tm_layout(main.title = "Child care supply in Lakeview, Chicago",
-            legend.outside = TRUE,
-            legend.outside.position = "right")
+                                           title=" ") +
+  tm_layout(main.title = "Child care supply in Lakeview: \nslots per child",
+            legend.position = c("right", "center")) +
+  tm_compass(type = "4star", size = 2, position = c("right", "top")) + 
+  tm_scale_bar(position = c("left", "bottom"), text.size = 0.5, breaks = c(0, 0.5, 1)) +
+  tm_credits("Created by Laura Hatt", fontface = "bold", position = c("right", "bottom"), size = 0.5) +
+  tm_credits("6 March 2023", position = c("right", "bottom"), size = 0.5)
 
 tmap_save(map_supply_smooth, paste0(path, "Maps/map_supply_smooth.png"))
-tmap_mode("view")
 map_supply_smooth
 ```
 
@@ -100,17 +112,49 @@ ecdf(st_set_geometry(supply_voro, NULL)$AdjSup)(0)
 quantile(st_set_geometry(supply_voro, NULL)$AdjSup, probs = seq(0, 1, by= 0.1)) 
 
 #now transform and map
-supply_voro$nonzero <- as.numeric(st_set_geometry(supply_voro, NULL)$AdjSup > 0)
-supply_voro
+#supply_voro$nonzero <- as.numeric(st_set_geometry(supply_voro, NULL)$AdjSup > 0)
+supply_voro$nonzero <-factor(ifelse(supply_voro$AdjSup==0,"Zero","More than zero"))
+supply_voro <- mutate(supply_voro, nonzero = factor(nonzero, levels = c("Zero", "More than zero")))
 ```
+
 
 ```{r}
-tmap_mode("plot")
+supply_voro_nonzero <- supply_voro %>% 
+  group_by(nonzero) %>%
+  summarize()
 
-tm_shape(lakeview) + tm_polygons() + 
-  tm_shape(supply_voro) + tm_polygons(col = "nonzero", 
-                                      palette="RdBu")
+#https://www.jla-data.net/eng/adjusting-bounding-box-of-a-tmap-map/
+bbox_new <- st_bbox(lakeview) # current bounding box
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+# bbox_new[1] <- bbox_new[1] - (0.1 * xrange) # xmin - left
+ bbox_new[3] <- bbox_new[3] + (0.4 * xrange) # xmax - right
+ bbox_new[2] <- bbox_new[2] - (0.2 * yrange) # ymin - bottom
+ #bbox_new[4] <- bbox_new[4] + (0.3 * yrange) # ymax - top
+bbox_new <- bbox_new %>% st_as_sfc() 
+
+
+tm_shape(lakeview, bbox=bbox_new) + tm_polygons() +
+  tm_shape(supply_voro_nonzero) + tm_polygons(col="nonzero", 
+                                           palette="RdBu",
+                                           title=" ") +
+  tm_layout(main.title = "Child care supply in Lakeview: \nplaces with zero slots per child",
+            legend.position = c("right", "center")) + 
+  tm_compass(type = "4star", size = 2, position = c("right", "top")) + 
+  tm_scale_bar(position = c("left", "bottom"), text.size = 0.5, breaks = c(0, 0.5, 1)) +
+  tm_credits("Created by Laura Hatt", fontface = "bold", position = c("right", "bottom"), size = 0.5) +
+  tm_credits("6 March 2023", position = c("right", "bottom"), size = 0.5)
 ```
+
+
+
+
+
+
+
+
+
+
 
 
 
