@@ -36,7 +36,7 @@ daycare_sf <- read_sf(paste0(path, "Shapefiles/daycare_locations.shp"))
 fams_as_pts <- read_sf(paste0(path, "Shapefiles/families_as_points_lakeview.shp"))
 ```
 
-```{r select-daycares-within-one-mile-of-lakeview}
+```{r select-daycares-within-one-mile-of-lakeview, warning = FALSE}
 lakeview_buff <- st_buffer(lakeview, 5280)
 daycare_lakeview <- st_intersection(daycare_sf, lakeview_buff)
 daycare_lakeview_4326 <- st_transform(daycare_lakeview, "EPSG:4326")
@@ -57,13 +57,37 @@ prov_isochrones_df <- st_transform(prov_isochrones_df, "EPSG:3435")
 ```
 
 ```{r plot-families-and-provider-isochrones}
-#come back and format this
 tmap_mode("plot")
-tm_shape(st_buffer(lakeview, 5280*1.5)) + tm_borders() +
-  tm_shape(lakeview) + tm_polygons(alpha=0.25) +
-  tm_shape(fams_as_pts) + tm_dots(col="darkred", size=0.01) +
-  tm_shape(prov_isochrones_df) + tm_polygons(alpha=0.25) +
-  tm_shape(daycare_lakeview) + tm_dots(col="darkgreen", size=0.25) 
+
+bbox_new <- st_bbox(st_buffer(lakeview, 5280*1.5)) 
+xrange <- bbox_new$xmax - bbox_new$xmin 
+yrange <- bbox_new$ymax - bbox_new$ymin 
+#bbox_new[1] <- bbox_new[1] - (0.5 * xrange) # xmin - left
+bbox_new[3] <- bbox_new[3] + (0.1 * xrange) #xmax - right
+bbox_new[2] <- bbox_new[2] - (0.1 * yrange) #ymin - bottom
+bbox_new <- bbox_new %>% st_as_sfc() 
+
+
+map_provider_isochrones <- tm_shape(st_buffer(lakeview, 5280*1.5), bbox=bbox_new) + 
+  tm_borders(col="white") +
+  tm_shape(st_buffer(lakeview, 5280)) + tm_borders() +
+  tm_shape(fams_as_pts) + tm_dots(col="darkred", size=0.01, alpha=0.25) +
+  tm_shape(lakeview) + tm_borders(col="black", lwd=5) +
+  tm_shape(prov_isochrones_df) + tm_borders(col="black", lwd=2.5) +
+  tm_shape(daycare_lakeview) + tm_dots(col="darkgreen", size=0.5) +
+  tm_layout(main.title = "Daycares Within One Mile of Lakeview: \nLocations, Isochrones, and Nearby Families",
+            main.title.size = 1.25,
+            main.title.position = "center",
+            legend.position = c("right", "center")) + 
+  tm_compass(type = "4star", size = 2, position = c("right", "top")) + 
+  tm_scale_bar(position = c("left", "bottom"), text.size = 0.5, breaks = c(0, 0.5, 1)) +
+  tm_credits("Created by Laura Hatt", fontface = "bold", 
+             position = c("right", "bottom"), size = 0.5) +
+  tm_credits("6 March 2023", position = c("right", "bottom"), size = 0.5) 
+
+tmap_save(map_provider_isochrones, paste0(path, "Maps/map_provider_isochrones.png"))
+map_provider_isochrones
+#add manual legend to label red vs green dots
 ```
 
 ```{r count-families-in-each-isochrone}
@@ -88,12 +112,12 @@ prov_isochrones_df['SPR'] <- st_set_geometry(prov_isochrones_df, NULL)['DyCpcty'
   st_set_geometry(prov_isochrones_df, NULL)['num_child']
 ```
 
-```{r add-SPR-to-point-df}
-prov_isochrones_df <- st_set_geometry(prov_isochrones_df, NULL)
-daycare_SPR <- merge(daycare_lakeview, prov_isochrones_df, 
-                     by.x = 'PrvdrID', by.y = 'PrvdrID', all.x = TRUE)
 
-daycare_SPR <- daycare_SPR %>% select(PrvdrID, DyCpcty.x, SPR)
+```{r}
+daycare_SPR <- merge(daycare_lakeview, 
+                     st_set_geometry(prov_isochrones_df, NULL),
+                     by.x = 'PrvdrID', by.y = 'PrvdrID', all.x = TRUE) %>%
+  select(PrvdrID, DyCpcty.x, SPR)
 ```
 
 ```{r}
