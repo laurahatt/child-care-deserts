@@ -15,8 +15,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(sf)
 library(tmap)
 library(tidyverse)
-library(dodgr)
-library(geodist)
 
 #load developer version of osrm - there's a bug in the CRAN version
 dev_lib_path <-"/Users/laurahatt/Documents/R/dev-versions/"
@@ -28,78 +26,77 @@ path = "/Users/laurahatt/Documents/GitHub/child-care-deserts/"
 
 At this point, my analysis focuses on Lakeview. This is mainly due to computer processing constraints; otherwise I would study all of Chicago.
 
-```{r create-buffer-around-lakeview, message=FALSE}
-comm_areas <- st_read(paste0(path, "Inputs/comm_areas.geojson"))
-comm_areas <- st_transform(comm_areas, "EPSG:3435")
-lakeview <- comm_areas %>% filter(community == "LAKE VIEW")
-lakeview_buff_3435 <- st_buffer(lakeview, 5280)  #one mile buffer
-lakeview_buff_4326 <- st_transform(lakeview_buff_3435, "EPSG:4326") #change back to OSMdata CRS
-```
-
-```{r load-daycares-in-lakeview-buffer, warning=FALSE}
+```{r load-data, message=FALSE}
+lakeview <- st_read(paste0(path, "Inputs/comm_areas.geojson")) %>% 
+  filter(community == "LAKE VIEW") %>%
+  st_transform("EPSG:3435")
+  
 daycare_sf <- read_sf(paste0(path, "Shapefiles/daycare_locations.shp"))
-daycare_sf_4326 <- st_transform(daycare_sf, "EPSG:4326")
-daycare_lakeview <- st_intersection(daycare_sf_4326, lakeview_buff_4326)
-daycare_lakeview_3435 <- st_transform(daycare_lakeview, "EPSG:3435")
-```
 
-```{r create-15-min-walk-isochrones-around-daycare-providers}
-isochrones <- list()
-for (row in seq(1,nrow(daycare_lakeview), by=1)) {
-  iso <- osrmIsochrone(loc = daycare_lakeview[row,], breaks = 15, osrm.profile="foot")
-  iso['PrvdrID'] <- st_set_geometry(daycare_lakeview[row,], NULL)['PrvdrID']
-  iso['DyCpcty'] <- st_set_geometry(daycare_lakeview[row,], NULL)['DyCpcty']
-  isochrones[[row]] <- iso
-  print(row)
-}
-
-isochrones_df = do.call(rbind, isochrones)
-isochrones_3435 <- st_transform(isochrones_df, "EPSG:3435")
-```
-
-```{r load-families-as-points-shapefile}
 fams_as_pts <- read_sf(paste0(path, "Shapefiles/families_as_points_lakeview.shp"))
 ```
 
+```{r select-daycares-within-one-mile-of-lakeview}
+lakeview_buff <- st_buffer(lakeview, 5280)
+daycare_lakeview <- st_intersection(daycare_sf, lakeview_buff)
+daycare_lakeview_4326 <- st_transform(daycare_lakeview, "EPSG:4326")
+```
+
+```{r create-15-min-walk-isochrones-around-daycare-providers}
+prov_isochrones <- list()
+for (row in seq(1,nrow(daycare_lakeview_4326), by=1)) {
+  iso <- osrmIsochrone(loc = daycare_lakeview_4326[row,], breaks = 15, osrm.profile="foot")
+  iso['PrvdrID'] <- st_set_geometry(daycare_lakeview_4326[row,], NULL)['PrvdrID']
+  iso['DyCpcty'] <- st_set_geometry(daycare_lakeview_4326[row,], NULL)['DyCpcty']
+  prov_isochrones[[row]] <- iso
+  print(row)
+}
+
+prov_isochrones_df = do.call(rbind, prov_isochrones)
+prov_isochrones_df <- st_transform(prov_isochrones_df, "EPSG:3435")
+```
+
 ```{r plot-families-and-provider-isochrones}
-tmap_mode("view")
+#come back and format this
+tmap_mode("plot")
 tm_shape(st_buffer(lakeview, 5280*1.5)) + tm_borders() +
   tm_shape(lakeview) + tm_polygons(alpha=0.25) +
   tm_shape(fams_as_pts) + tm_dots(col="darkred", size=0.01) +
-  tm_shape(isochrones_3435) + tm_polygons(alpha=0.25) +
-  tm_shape(daycare_lakeview_3435) + tm_dots(col="darkgreen", size=0.25) 
+  tm_shape(prov_isochrones_df) + tm_polygons(alpha=0.25) +
+  tm_shape(daycare_lakeview) + tm_dots(col="darkgreen", size=0.25) 
 ```
 
 ```{r count-families-in-each-isochrone}
 num_fams_in_iso <- list()
-for (row in seq(1,nrow(isochrones_3435), by=1)) {
-  fams_in_iso <- lengths(st_intersects(fams_as_pts, isochrones_3435[row,])) > 0 
+for (row in seq(1,nrow(prov_isochrones_df), by=1)) {
+  fams_in_iso <- lengths(st_intersects(fams_as_pts, prov_isochrones_df[row,])) > 0 
   fams_in_iso <- fams_as_pts[fams_in_iso,]
   num_fams <- nrow(fams_in_iso)
   num_fams_in_iso <- append(num_fams_in_iso, num_fams)
 }
+
 num_fams_in_iso <- unlist(num_fams_in_iso)
-isochrones_3435['num_fams'] <- num_fams_in_iso
+prov_isochrones_df['num_fams'] <- num_fams_in_iso
 ```
 
 Note that I assume 1.94 young children per family, per:
 https://www.statista.com/statistics/718084/average-number-of-own-children-per-family/#:~:text=The%20typical%20American%20picture%20of,18%20per%20family%20in%201960.&text=If%20there's%20one%20thing%20the,is%20known%20for%2C%20it's%20diversity.
 
 ```{r estimate-slot-to-population-ratio-for-each-provider}
-isochrones_3435['num_child'] <- round(st_set_geometry(isochrones_3435, NULL)['num_fams']*1.94,0)
-isochrones_3435['SPR'] <- st_set_geometry(isochrones_3435, NULL)['DyCpcty'] / 
-  st_set_geometry(isochrones_3435, NULL)['num_child']
-isochrones_3435
+prov_isochrones_df['num_child'] <- round(st_set_geometry(prov_isochrones_df, NULL)['num_fams']*1.94,0)
+prov_isochrones_df['SPR'] <- st_set_geometry(prov_isochrones_df, NULL)['DyCpcty'] / 
+  st_set_geometry(prov_isochrones_df, NULL)['num_child']
 ```
 
-```{r save-isochrones-as-shapefile}
-#write_sf(obj=isochrones_3435, dsn=paste0(path, "Shapefiles/provider_isochrones.shp"))
+```{r add-SPR-to-point-df}
+prov_isochrones_df <- st_set_geometry(prov_isochrones_df, NULL)
+daycare_SPR <- merge(daycare_lakeview, prov_isochrones_df, 
+                     by.x = 'PrvdrID', by.y = 'PrvdrID', all.x = TRUE)
+
+daycare_SPR <- daycare_SPR %>% select(PrvdrID, DyCpcty.x, SPR)
 ```
 
 ```{r}
-isochrones_3435 <- st_set_geometry(isochrones_3435, NULL)
-daycare_SPR <- merge(daycare_lakeview_3435, isochrones_3435, by.x = 'PrvdrID', by.y = 'PrvdrID', all.x = TRUE)
-daycare_SPR <- daycare_SPR %>% select(PrvdrID, DyCpcty.x, SPR)
 write_sf(obj=daycare_SPR, dsn=paste0(path, "Shapefiles/daycare_SPR.shp"))
 ```
 
