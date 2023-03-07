@@ -105,11 +105,26 @@ tmap_save(map_slots_per_child_point, paste0(path, "Maps/map_slots_per_child_poin
 map_slots_per_child_point
 ```
 
+
 ```{r}
+map_zero_slots_point <- tm_shape(st_buffer(lakeview, 5280), bbox=bbox_new) +
+  tm_borders(col="white") +
+  tm_shape(lakeview) + tm_polygons(alpha=0.5) +
+  tm_shape(daycare_SPR) + tm_dots(size="Slots")  +
+  tm_shape(fam_supply_by10[fam_supply_by10$AdjSup == 0,]) + 
+  tm_dots(col = "darkred", title = " ", legend.hist = FALSE) +
+  tm_layout(main.title = "Child Care Supply in Lakeview: \nRegions with Zero Slots (Point Format)",
+            main.title.size = 1.25,
+            main.title.position = "center",
+            legend.position = c("right", "center"))+ 
+  tm_compass(type = "4star", size = 2, position = c("right", "top")) + 
+  tm_scale_bar(position = c("left", "bottom"), text.size = 0.5, breaks = c(0, 0.5, 1)) +
+  tm_credits("Created by Laura Hatt", fontface = "bold", 
+             position = c("right", "bottom"), size = 0.5) +
+  tm_credits("6 March 2023", position = c("right", "bottom"), size = 0.5) 
 
+tmap_save(map_zero_slots_point, paste0(path, "Maps/map_zero_slots_point.png"))
+map_zero_slots_point
 ```
-
-
-
 
 
