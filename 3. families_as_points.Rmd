@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r load-libraries}
+```{r load-libraries, warning = FALSE}
 library(tidyverse)
 library(sf)
 library(tmap)
@@ -24,14 +24,15 @@ families_by_block_sf <- read_sf(paste0(path, "Shapefiles/families_by_block.shp")
 ```
 
 ```{r create-lakeview-polygon, message=FALSE}
-comm_areas <- st_read(paste0(path, "Inputs/comm_areas.geojson"))
-comm_areas <- st_transform(comm_areas, "EPSG:3435")
-lakeview <- comm_areas %>% filter(community == "LAKE VIEW")
-lakeview_buff_3435 <- st_buffer(lakeview, 5280*1.5)  #one and a half mile buffer
+lakeview <- st_read(paste0(path, "Inputs/comm_areas.geojson")) %>% 
+  filter(community == "LAKE VIEW") %>%
+  st_transform("EPSG:3435") 
+
+lakeview_buff <- st_buffer(lakeview, 5280*1.5)  #one and a half mile buffer
 ```
 
 ```{r select-blocks-in-lakeview}
-lakeview_blocks <- lengths(st_intersects(families_by_block_sf, lakeview_buff_3435)) > 0 
+lakeview_blocks <- lengths(st_intersects(families_by_block_sf, lakeview_buff)) > 0 
 families_by_block_lakeview <- families_by_block_sf[lakeview_blocks,]
 ```
 
@@ -52,11 +53,8 @@ for (row in seq(1,nrow(families_by_block_lakeview), by=1)) {
 families_as_points_lakeview = do.call(rbind, families)
 ```
 
-```{r}
+```{r save-shapefile}
 write_sf(obj=families_as_points_lakeview, dsn=paste0(path, "Shapefiles/families_as_points_lakeview.shp"))
 ```
-
-
-
 
 
