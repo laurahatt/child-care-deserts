@@ -10,9 +10,9 @@ Consider, for instance, the dimension of “reasonable effort”. Researchers co
 
 In theory, a study of child care access in a particular region might examine every relevant dimension and sub-dimension. In practice, however, a single study usually examines just a few elements. According to one literature review, the most commonly studied sub-dimension of child care access is child care slot availability, which is usually assessed based on estimates of supply, demand, and/or utilization. Researchers also frequently studied access in terms of provider type, geographic location, care quality, and the availability of subsidies, among other concepts.[^3]
 
-This analysis defines child care access in terms of availability and location. This is a very common way of measuring child care access; after all, spatial proximity to an available amenity is a necessary (though of course not sufficient) component of access.  Figure 1, below, locates this narrow approach within a fuller conceptualization of child care access. Factors not incorporated within this analysis are shown in gray.
+This analysis defines child care access in terms of availability and location. This is a very common way of measuring child care access; after all, spatial proximity to an available amenity is a necessary (though of course not sufficient) component of access.  The concept map below locates this narrow approach within a fuller conceptualization of child care access. Factors not incorporated within this analysis are shown in gray.
 
-![Concept Map](/Diagrams/concept_map_v2.png)
+![Concept Map](/Diagrams/concept_map_v3.png)
 
 
   [^1]: Friesen, S., Lin, V.-K., Forry, N., & Tout, K. (2017). Defining and Measuring Access to High Quality Early Care and Education: A Guidebook for Policymakers and Researchers (No. OPRE Report #2017-08). Office of Planning, Research and Evaluation, Administration for Children and Families U.S. Department of Health and Human Services. 
