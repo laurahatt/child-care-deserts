@@ -15,10 +15,6 @@ This analysis defines child care access in terms of availability and location. T
 ![Concept Map](/Diagrams/concept_map_v2.png)
 
 
-[^1] Friesen, S., Lin, V.-K., Forry, N., & Tout, K. (2017). Defining and Measuring Access to High Quality Early Care and Education: A Guidebook for Policymakers and Researchers (No. OPRE Report #2017-08). Office of Planning, Research and Evaluation, Administration for Children and Families U.S. Department of Health and Human Services. 
-
-
-[^2] Thomson, D., Cantrell, E., Guerra, G., Gooze, R., & Tout, K. (2020). Conceptualizing and Measuring Access to Early Care and Education. OPRE Report #2020-106. Washington, DC: Office of Planning, Research, and Evaluation, Administration for Children and Families, U.S. Department of Health and Human Services.
-
-
-[^3] Ibid.
+  [^1]: Friesen, S., Lin, V.-K., Forry, N., & Tout, K. (2017). Defining and Measuring Access to High Quality Early Care and Education: A Guidebook for Policymakers and Researchers (No. OPRE Report #2017-08). Office of Planning, Research and Evaluation, Administration for Children and Families U.S. Department of Health and Human Services. 
+  [^2]: Thomson, D., Cantrell, E., Guerra, G., Gooze, R., & Tout, K. (2020). Conceptualizing and Measuring Access to Early Care and Education. OPRE Report #2020-106. Washington, DC: Office of Planning, Research, and Evaluation, Administration for Children and Families, U.S. Department of Health and Human Services.
+  [^3]: Ibid.
