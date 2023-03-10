@@ -77,9 +77,9 @@ Very few families in Lakeview can walk from their homes to licensed child care i
 
 ![Map - Slots Per Child (Voronoi)](/Maps/map_slots_per_child_voronoi.png)
 
-![Map - Zero Slots (Point)](/Maps/zero_slots_point.png)
+![Map - Zero Slots (Point)](/Maps/map_zero_slots_point.png)
 
-![Map - Zero Slots (Voronoi)](/Maps/zero_slots_voronoi.png)
+![Map - Zero Slots (Voronoi)](/Maps/map_zero_slots_voronoi.png)
 
 
 ### Discussion
