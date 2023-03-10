@@ -4,6 +4,8 @@
 
 Can families in Lakeview walk to child care in fifteen minutes or less? This analysis provides a partial answer to this question by generating estimates of child care availability at many specific geographic locations in Lakeview. It finds that potential competition for child care slots is extremely stiff, ranging from 0.00 to about 0.12 slots per child in different parts of the neighborhood. 
 
+This analysis was conducted as part of a Geographic Information Science course at the University of Chicago.
+
 ### Introduction
 
 #### I. Conceptualizing Child Care Access
