@@ -50,22 +50,28 @@ These data sources, their transformations, and their relationships to one anothe
 
 These data were transformed and analyzed with R as follows.
 
-Step 1: Geocode child care providers
+*Step 1: Geocode child care providers*
+
 Download Chicago community areas boundary shapefile, select the Lakeview polygon, and save. Download list of child care providers, with addresses, from the Illinois Department of Children and Facility Services. Geocode addresses, using the tidygeocoder package to access the Census Bureau, OpenStreetMap, and ArcGIS geocoding services. Select all child care providers within one mile of Lakeview. Save shapefile.
 
-Step 2: Count families with children under six per census block
+*Step 2: Count families with children under six per census block*
+
 Use the tidycensus library’s get_decennial() function to automatically download counts of households with children under six, by census block, based on the results of the 2010 decennial census. The counts are disaggregated by household type; reshape data from long to wide, so that each observation corresponds to one census block. Improve processing speed by downloading counts without spatial information, then download and merge spatial information for blocks. Save shapefile.
 
-Step 3: Estimate precise locations of families
+*Step 3: Estimate precise locations of families*
+
 Load Lakeview shapefile and shapefile with number of families by census block. Select census blocks that fall at least partly within the Lakeview community area boundary; use st_intersects(), not st_intersection(), so as to preserve the geometry of census blocks that cross the Lakeview boundary. For each census block, use st_sample() to estimate exact family locations, assuming that families are randomly distributed within the block. Save shapefile. Use st_buffer() to create 1.5-mile buffer around Lakeview. Select census blocks that fall at least partly within this buffer. For each census block, use st_sample() to estimate exact family locations, assuming that families are randomly distributed within the block. Save shapefile.
 
-Step 4: Estimate Slot-to-Population Ratio for each child care provider
+*Step 4: Estimate Slot-to-Population Ratio for each child care provider*
+
 Load child care provider shapefile and shapefile with families within 1.5 miles of Lakeview. Use a for-loop and the osrm (Open Source Routing Machine) package’s osrmIsochrone() function to create a fifteen minute walking radius around each child care provider, adding each isochrone to a list before proceeding. Use do.call(rbind) to turn the list into a dataframe. Use a for-loop and st_intersects() to count the number of families within each isochrone, adding each count to a list before proceeding. Add the list to the isochrone dataframe as a column. Multiply the number of families column by 1.94 to create a number of children column. Divide capacity by number of children to estimate slot-to-population ratio (SPR or “slots to tot”). Finally, add SPR column to original dataframe of provider point locations. Save shapefile.
 
-Step 5: Estimate total supply available to each family
+*Step 5: Estimate total supply available to each family*
+
 Load child care provider SPR shapefile and shapefile with locations of families in Lakeview. Select every tenth family (to speed up processing). Use a for-loop and the osrmIsochrone() function to create a 15-minute walking radius around each family. Use st_intersects() to select the child care providers that fall within the isochrone. Take the sum of the SPR of all providers in the isochrone to estimate Total Supply available to the family. Add Total Supply column to original dataframe of family point locations. Save shapefile.
 
-Step 6: Interpolate point estimates of child care availability
+*Step 6: Interpolate point estimates of child care availability*
+
 Load shapefile with Lakeview boundary and shapefile with familes’ Total Supply. Use st_voronoi() to create Voronoi polygons around each family. Use st_intersection() to clip Voronoi polygons at Lakeview boundaries. Round Total Supply to two decimal places, then use group_by() and summarize() to combine polygons with equal values of Total Supply. Plot.
 
 
@@ -73,14 +79,14 @@ Load shapefile with Lakeview boundary and shapefile with familes’ Total Supply
 
 Very few families in Lakeview can walk from their homes to licensed child care in 15 minutes. Child care availability ranges from 0 to 0.12 slots per tot, in different parts of the neighborhood. The mean level of access is 0.0271 slots per tot. The median level is 0.0161 slots per tot. 
 
-As shown in the first and second maps below, availability is highest in the southeast part of the neighborhood, where there are two relatively large providers. 
+As shown in the first and second maps below, child care availability is highest in the southeast part of the neighborhood, where there are two relatively large providers. 
 
 ![Map - Slots Per Child (Point)](/Maps/map_slots_per_child_point.png)
 
 ![Map - Slots Per Child (Voronoi)](/Maps/map_slots_per_child_voronoi.png)
 
 
-Child care access is often represented in terms of “child care deserts”: places where there is zero, or nearly zero, access. The third and fourth maps, below, highlight regions in Lakeview with zero child care access within a fifteen-minute walk.
+Child care access is often represented in terms of “child care deserts”: places where there is zero, or nearly zero, access. The third and fourth maps, below, highlight regions in Lakeview with zero child care access within a 15-minute walk.
 
 ![Map - Zero Slots (Point)](/Maps/map_zero_slots_point.png)
 
