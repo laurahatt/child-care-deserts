@@ -71,11 +71,16 @@ Load shapefile with Lakeview boundary and shapefile with familes’ Total Supply
 
 ### Results
 
-Very few families in Lakeview can walk from their homes to licensed child care in 15 minutes. As shown in the maps below, child care availability in Lakeview ranges from 0 to 0.12 slots per tot, based on the supply of providers within a 15 minute walk from family’s homes. Availability is highest in the southeast part of the neighborhood, where there are two relatively large providers. However, availability is zero in most of the rest of the neighborhood. 
+Very few families in Lakeview can walk from their homes to licensed child care in 15 minutes. Child care availability ranges from 0 to 0.12 slots per tot, in different parts of the neighborhood. The mean level of access is 0.0271 slots per tot. The median level is 0.0161 slots per tot. 
+
+As shown in the first and second maps below, availability is highest in the southeast part of the neighborhood, where there are two relatively large providers. 
 
 ![Map - Slots Per Child (Point)](/Maps/map_slots_per_child_point.png)
 
 ![Map - Slots Per Child (Voronoi)](/Maps/map_slots_per_child_voronoi.png)
+
+
+Child care access is often represented in terms of “child care deserts”: places where there is zero, or nearly zero, access. The third and fourth maps, below, highlight regions in Lakeview with zero child care access within a fifteen-minute walk.
 
 ![Map - Zero Slots (Point)](/Maps/map_zero_slots_point.png)
 
