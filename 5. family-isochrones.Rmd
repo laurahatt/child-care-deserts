@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r load-packages}
+```{r load-packages, warning = FALSE}
 library(sf)
 library(tmap)
 library(tidyverse)
@@ -83,15 +83,18 @@ bbox_new <- bbox_new %>% st_as_sfc()
 #when I'm showing variation by dot size instead of dot color
 daycare_SPR <- rename(daycare_SPR, Slots = DyCpcty_x)
 
+#round supply to two decimals, to streamline plot legend
+fam_supply_by10$AdjSupRd <- round(fam_supply_by10$AdjSup, 2)
+
 map_slots_per_child_point <- tm_shape(st_buffer(lakeview, 5280), bbox=bbox_new) +
   tm_borders(col="white") +
   tm_shape(lakeview) + tm_polygons(alpha=0.5) +
   tm_shape(daycare_SPR) + tm_dots(size="Slots")  +
-  tm_shape(fam_supply_by10) + tm_dots(col = "AdjSup",
+  tm_shape(fam_supply_by10) + tm_dots(col = "AdjSupRd",
                                       palette = "RdBu",
-                                      title = "Slot-to-child ratio",
+                                      title = "Slots Per Tot",
                                       legend.hist = FALSE) +
-  tm_layout(main.title = "Child Care Supply in Lakeview: \nSlot-to-Child Ratio (Point Format)",
+  tm_layout(main.title = "Child Care Availability in Lakeview: \nSlots Per Tot (Point Format)",
             main.title.size = 1.25,
             main.title.position = "center",
             legend.position = c("right", "center"))+ 
@@ -100,8 +103,8 @@ map_slots_per_child_point <- tm_shape(st_buffer(lakeview, 5280), bbox=bbox_new) 
   tm_credits("Created by Laura Hatt", fontface = "bold", 
              position = c("right", "bottom"), size = 0.5) +
   tm_credits("6 March 2023", position = c("right", "bottom"), size = 0.5) 
-
 tmap_save(map_slots_per_child_point, paste0(path, "Maps/map_slots_per_child_point.png"))
+
 map_slots_per_child_point
 ```
 
@@ -113,7 +116,7 @@ map_zero_slots_point <- tm_shape(st_buffer(lakeview, 5280), bbox=bbox_new) +
   tm_shape(daycare_SPR) + tm_dots(size="Slots")  +
   tm_shape(fam_supply_by10[fam_supply_by10$AdjSup == 0,]) + 
   tm_dots(col = "darkred", title = " ", legend.hist = FALSE) +
-  tm_layout(main.title = "Child Care Supply in Lakeview: \nRegions with Zero Slots (Point Format)",
+  tm_layout(main.title = "Child Care Availability in Lakeview: \nRegions with Zero Slots (Point Format)",
             main.title.size = 1.25,
             main.title.position = "center",
             legend.position = c("right", "center"))+ 

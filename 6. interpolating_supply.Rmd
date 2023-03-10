@@ -67,18 +67,26 @@ tmap_mode("plot")
 
 #expand bounding box to make room for map elements
 #https://www.jla-data.net/eng/adjusting-bounding-box-of-a-tmap-map/
-bbox_new <- st_bbox(lakeview) 
+# bbox_new <- st_bbox(lakeview) 
+# xrange <- bbox_new$xmax - bbox_new$xmin 
+# yrange <- bbox_new$ymax - bbox_new$ymin 
+# bbox_new[3] <- bbox_new[3] + (0.4 * xrange) #xmax - right
+# bbox_new[2] <- bbox_new[2] - (0.2 * yrange) #ymin - bottom
+# bbox_new <- bbox_new %>% st_as_sfc() 
+
+bbox_new <- st_bbox(st_buffer(lakeview, 5280)) 
 xrange <- bbox_new$xmax - bbox_new$xmin 
 yrange <- bbox_new$ymax - bbox_new$ymin 
-bbox_new[3] <- bbox_new[3] + (0.4 * xrange) #xmax - right
-bbox_new[2] <- bbox_new[2] - (0.2 * yrange) #ymin - bottom
+bbox_new[1] <- bbox_new[1] + (0.1 * xrange) # xmin - left
+bbox_new[3] <- bbox_new[3] + (0.1 * xrange) #xmax - right
+bbox_new[2] <- bbox_new[2] + (0.1 * yrange) #ymin - bottom
 bbox_new <- bbox_new %>% st_as_sfc() 
 
 map_slots_per_child_voronoi <- tm_shape(lakeview, bbox=bbox_new) + tm_polygons() +
   tm_shape(fam_voro_comb) + tm_polygons(col="AdjSupRd", 
                                            palette="RdBu",
-                                           title=" ") +
-  tm_layout(main.title = "Child Care Supply in Lakeview: \nSlots Per Child (Voronoi Tessellation)",
+                                           title="Slots Per Tot") +
+  tm_layout(main.title = "Child Care Availability in Lakeview: \nSlots Per Tot (Voronoi Tessellation)",
             main.title.size = 1.25,
             main.title.position = "center",
             legend.position = c("right", "center")) +
@@ -119,8 +127,8 @@ fam_voro_nonzero <- fam_voro_df %>%
 map_zero_slots_voronoi <- tm_shape(lakeview, bbox=bbox_new) + tm_polygons() +
   tm_shape(fam_voro_nonzero) + tm_polygons(col="nonzero", 
                                            palette="RdBu",
-                                           title=" ") +
-  tm_layout(main.title = "Child Care Supply in Lakeview: \nRegions with Zero Slots (Voronoi Tessellation)",
+                                           title="Slots Per Tot") +
+  tm_layout(main.title = "Child Care Availability in Lakeview: \nRegions with Zero Slots (Voronoi Tessellation)",
             main.title.size = 1.25,
             main.title.position = "center", 
             legend.position = c("right", "center")) + 
