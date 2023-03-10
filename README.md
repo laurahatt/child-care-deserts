@@ -6,6 +6,8 @@ Can families in Lakeview walk to child care in fifteen minutes or less? This ana
 
 This analysis was conducted as part of a Geographic Information Science course at the University of Chicago.
 
+![Map - Slots Per Child (Voronoi)](/Maps/map_slots_per_child_voronoi.png)
+
 ### Introduction
 
 #### I. Conceptualizing Child Care Access
